@@ -375,3 +375,5 @@ class VirtualShell:
 # POSIX path normalization and directory resolver
 
 # In-memory filesystem hierarchy clone
+
+# Shlex command router and pipeline tokenizer
