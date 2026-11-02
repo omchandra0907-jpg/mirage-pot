@@ -377,3 +377,5 @@ class VirtualShell:
 # In-memory filesystem hierarchy clone
 
 # Shlex command router and pipeline tokenizer
+
+# Directory navigation handlers
