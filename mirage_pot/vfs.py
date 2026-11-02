@@ -371,3 +371,5 @@ class VirtualShell:
 
     def _cmd_exit(self, args: List[str]) -> str:
         return "logout"
+
+# POSIX path normalization and directory resolver
