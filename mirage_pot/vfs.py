@@ -379,3 +379,5 @@ class VirtualShell:
 # Shlex command router and pipeline tokenizer
 
 # Directory navigation handlers
+
+# In-memory file modification and redirection
