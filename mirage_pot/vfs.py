@@ -381,3 +381,5 @@ class VirtualShell:
 # Directory navigation handlers
 
 # In-memory file modification and redirection
+
+# System discovery command responses
