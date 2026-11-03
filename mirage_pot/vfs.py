@@ -385,3 +385,5 @@ class VirtualShell:
 # System discovery command responses
 
 # Realistic process tree emulation
+
+# Safe payload logging without network egress
