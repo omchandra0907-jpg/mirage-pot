@@ -58,3 +58,5 @@ def classify_command(cmd: str) -> Optional[MitreTechnique]:
     return None
 
 # Rule mapping: T1082 System Information Discovery
+
+# Rule mapping: T1003 OS Credential Dumping
