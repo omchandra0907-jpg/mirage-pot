@@ -56,3 +56,5 @@ def classify_command(cmd: str) -> Optional[MitreTechnique]:
         if pattern.search(clean_cmd):
             return tech
     return None
+
+# Rule mapping: T1082 System Information Discovery
