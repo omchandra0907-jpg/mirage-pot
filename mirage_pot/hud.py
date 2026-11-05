@@ -149,3 +149,5 @@ def replay_session(log_path: str, speed: float = 1.0):
                 console.print(f"[bold cyan]{user}@prod-srv-edge-01:~#[/bold cyan] {cmd}  {mitre_badge}")
                 if output:
                     console.print(f"[dim]{output}[/dim]")
+
+# Real-time alert stream renderer
