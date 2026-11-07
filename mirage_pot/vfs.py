@@ -371,21 +371,3 @@ class VirtualShell:
 
     def _cmd_exit(self, args: List[str]) -> str:
         return "logout"
-
-# POSIX path normalization and directory resolver
-
-# In-memory filesystem hierarchy clone
-
-# Shlex command router and pipeline tokenizer
-
-# Directory navigation handlers
-
-# In-memory file modification and redirection
-
-# System discovery command responses
-
-# Realistic process tree emulation
-
-# Safe payload logging without network egress
-
-# Dynamic canary token bait injection

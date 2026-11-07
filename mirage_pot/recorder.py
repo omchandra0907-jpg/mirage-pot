@@ -70,5 +70,3 @@ class SessionRecorder:
         self._file.write(json.dumps(asdict(event)) + "\n")
         self._file.flush()
         return event
-
-# Inter-keystroke delta timing capture
