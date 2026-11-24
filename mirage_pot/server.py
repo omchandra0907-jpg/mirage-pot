@@ -1,19 +1,24 @@
 """AsyncSSH Honeypot Server with Banner Spoofing and Stateful SSH Shell."""
 
-import asyncio
 import os
 import uuid
+from collections.abc import Callable
+
 import asyncssh
-from typing import Dict, Optional, Callable
 
 from .detector import classify_command
-from .recorder import SessionRecorder, SessionEvent
+from .recorder import SessionEvent, SessionRecorder
 from .vfs import VirtualShell
 
 BANNER = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6\r\n"
 
+
 class HoneypotSSHServer(asyncssh.SSHServer):
-    def __init__(self, recorder: SessionRecorder, event_callback: Optional[Callable[[SessionEvent], None]] = None):
+    def __init__(
+        self,
+        recorder: SessionRecorder,
+        event_callback: Callable[[SessionEvent], None] | None = None,
+    ):
         self.recorder = recorder
         self.event_callback = event_callback
         self.session_id = str(uuid.uuid4())[:8]
@@ -49,11 +54,12 @@ class HoneypotSSHServer(asyncssh.SSHServer):
             self.event_callback(ev)
         return True
 
+
 class HoneypotShellSession(asyncssh.SSHServerSession):
     def __init__(self, server: HoneypotSSHServer):
         self.server = server
         self.shell = VirtualShell(server.session_id, server.username)
-        self.chan: Optional[asyncssh.SSHServerChannel] = None
+        self.chan: asyncssh.SSHServerChannel | None = None
         self.input_buf = ""
 
     def connection_made(self, chan: asyncssh.SSHServerChannel):
@@ -65,15 +71,15 @@ class HoneypotShellSession(asyncssh.SSHServerSession):
     def session_started(self):
         assert self.chan is not None
         welcome = (
-            f"Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-105-generic x86_64)\r\n\r\n"
-            f" * Documentation:  https://help.ubuntu.com\r\n"
-            f" * Management:     https://landscape.canonical.com\r\n"
-            f" * Support:        https://ubuntu.com/pro\r\n\r\n"
-            f"System information as of Tue Nov 24 12:00:00 UTC 2026\r\n\r\n"
-            f"  System load:  0.08               Processes:             104\r\n"
-            f"  Usage of /:   14.2% of 48.29GB   Users logged in:       1\r\n"
-            f"  Memory usage: 22%                IPv4 address for eth0: 10.0.4.15\r\n\r\n"
-            f"Last login: Tue Nov 24 11:42:10 2026 from 192.168.1.100\r\n"
+            "Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-105-generic x86_64)\r\n\r\n"
+            " * Documentation:  https://help.ubuntu.com\r\n"
+            " * Management:     https://landscape.canonical.com\r\n"
+            " * Support:        https://ubuntu.com/pro\r\n\r\n"
+            "System information as of Tue Nov 24 12:00:00 UTC 2026\r\n\r\n"
+            "  System load:  0.08               Processes:             104\r\n"
+            "  Usage of /:   14.2% of 48.29GB   Users logged in:       1\r\n"
+            "  Memory usage: 22%                IPv4 address for eth0: 10.0.4.15\r\n\r\n"
+            "Last login: Tue Nov 24 11:42:10 2026 from 192.168.1.100\r\n"
         )
         self.chan.write(welcome)
         self._prompt()
@@ -130,6 +136,7 @@ class HoneypotShellSession(asyncssh.SSHServerSession):
                 self.input_buf += char
                 self.chan.write(char)
 
+
 def generate_host_key(key_path: str):
     """Generates an RSA host key for asyncssh if not existing."""
     if not os.path.exists(key_path):
@@ -137,12 +144,13 @@ def generate_host_key(key_path: str):
         key = asyncssh.generate_private_key("ssh-rsa", key_size=2048)
         key.write_private_key(key_path)
 
+
 async def start_server(
     host: str = "0.0.0.0",
     port: int = 2222,
     log_path: str = "data/sessions.jsonl",
     key_path: str = "data/host_key",
-    event_callback: Optional[Callable[[SessionEvent], None]] = None,
+    event_callback: Callable[[SessionEvent], None] | None = None,
 ):
     generate_host_key(key_path)
     recorder = SessionRecorder(log_path)

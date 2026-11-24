@@ -1,14 +1,12 @@
 """Live Rich Terminal HUD and Session Replay Player."""
 
-import asyncio
 import json
 import os
 import sys
 import time
-from typing import List, Dict
+
 from rich.console import Console
 from rich.layout import Layout
-from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -17,11 +15,12 @@ from .recorder import SessionEvent
 
 console = Console()
 
+
 class AttackHUD:
     def __init__(self):
-        self.events: List[SessionEvent] = []
-        self.active_sessions: Dict[str, dict] = {}
-        self.mitre_stats: Dict[str, int] = {}
+        self.events: list[SessionEvent] = []
+        self.active_sessions: dict[str, dict] = {}
+        self.mitre_stats: dict[str, int] = {}
         self.total_attacks = 0
 
     def add_event(self, ev: SessionEvent):
@@ -114,13 +113,16 @@ class AttackHUD:
         layout["footer"].update(Panel(footer_text, border_style="dim"))
         return layout
 
+
 def replay_session(log_path: str, speed: float = 1.0):
     """Replays captured JSONL attacker session with simulated typing cadence."""
     if not os.path.exists(log_path):
         console.print(f"[red]Error: Session log file not found: {log_path}[/red]")
         sys.exit(1)
 
-    console.print(f"[bold cyan]▶ Replaying attacker session:[/bold cyan] {log_path} (Speed: {speed}x)")
+    console.print(
+        f"[bold cyan]▶ Replaying attacker session:[/bold cyan] {log_path} (Speed: {speed}x)"
+    )
     time.sleep(1.0)
 
     with open(log_path, "r", encoding="utf-8") as f:
@@ -145,7 +147,13 @@ def replay_session(log_path: str, speed: float = 1.0):
             elif ev_type == "auth_success":
                 console.print(f"[bold green]✓ Session established: {user}@{src_ip}[/bold green]\n")
             elif ev_type == "command":
-                mitre_badge = f"[bold white on red] {mitre_id}: {mitre_name} [/bold white on red] " if mitre_id else ""
-                console.print(f"[bold cyan]{user}@prod-srv-edge-01:~#[/bold cyan] {cmd}  {mitre_badge}")
+                mitre_badge = (
+                    f"[bold white on red] {mitre_id}: {mitre_name} [/bold white on red] "
+                    if mitre_id
+                    else ""
+                )
+                console.print(
+                    f"[bold cyan]{user}@prod-srv-edge-01:~#[/bold cyan] {cmd}  {mitre_badge}"
+                )
                 if output:
                     console.print(f"[dim]{output}[/dim]")

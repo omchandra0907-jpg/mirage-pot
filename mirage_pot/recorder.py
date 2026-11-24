@@ -4,7 +4,8 @@ import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from typing import Optional, TextIO
+from typing import TextIO
+
 
 @dataclass
 class SessionEvent:
@@ -14,16 +15,17 @@ class SessionEvent:
     username: str
     event_type: str  # "auth_attempt", "auth_success", "command", "disconnect"
     command: str = ""
-    mitre_id: Optional[str] = None
-    mitre_name: Optional[str] = None
+    mitre_id: str | None = None
+    mitre_name: str | None = None
     output: str = ""
     delay_ms: int = 0
+
 
 class SessionRecorder:
     def __init__(self, log_path: str):
         self.log_path = log_path
         os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
-        self._file: Optional[TextIO] = None
+        self._file: TextIO | None = None
         self._last_event_time: float = time.time()
 
     def open(self):
@@ -42,8 +44,8 @@ class SessionRecorder:
         username: str,
         event_type: str,
         command: str = "",
-        mitre_id: Optional[str] = None,
-        mitre_name: Optional[str] = None,
+        mitre_id: str | None = None,
+        mitre_name: str | None = None,
         output: str = "",
     ) -> SessionEvent:
         now = time.time()
@@ -65,7 +67,7 @@ class SessionRecorder:
 
         if not self._file:
             self.open()
-        
+
         assert self._file is not None
         self._file.write(json.dumps(asdict(event)) + "\n")
         self._file.flush()

